@@ -54,8 +54,3 @@ Automatically detects and injects text into:
 4. Click **"Load unpacked"** and select the project folder
 5. The extension icon will appear in your toolbar — you're ready to go
 
----
-
-## License
-
-<!-- Add your license info here -->
