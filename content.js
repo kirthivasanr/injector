@@ -244,14 +244,34 @@
     return { ok: true };
   }
 
-  function handleMessage(message, _sender, sendResponse) {
-    if (message?.type === MSG_PING) { sendResponse({ pong: true }); return; }
-    if (message?.type !== MSG_ENABLE_INJECTION) return;
+const MSG_GET_PAGE_TEXT = "GET_PAGE_TEXT";
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+
+  // --- PING ---
+  if (message?.type === MSG_PING) {
+    sendResponse({ pong: true });
+    return;
+  }
+
+  // --- INJECTION MODE ---
+  if (message?.type === MSG_ENABLE_INJECTION) {
     const text = message?.payload?.text ?? "";
     const result = enterInjectionMode(text);
     sendResponse(result);
-    return true;
+    return;
   }
 
-  chrome.runtime.onMessage.addListener(handleMessage);
+  // --- TEXT EXTRACTION ---
+  if (message?.type === MSG_GET_PAGE_TEXT) {
+    try {
+      const text = document.documentElement.innerText || "";
+      sendResponse({ ok: true, text });
+    } catch (err) {
+      sendResponse({ ok: false, error: err.message || String(err) });
+    }
+    return;
+  }
+});
 })();
+

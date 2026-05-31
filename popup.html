@@ -6,17 +6,46 @@
   <title>Universal Text Injector</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <main class="popup">
-    <h1>Universal Text Injector</h1>
 
-    <label for="injectText">Text to inject</label>
-    <textarea id="injectText" placeholder="Paste or type text here..."></textarea>
+    <header class="hero">
+      <p class="eyebrow">Universal Text Injector</p>
+      <h1>Fast text grab and injection</h1>
+      <p class="lede">Extract the current page text or stage text for direct injection into fields and editors.</p>
+    </header>
 
-    <button id="startBtn" type="button">Start Injection Mode</button>
+    <div class="tabs" role="tablist" aria-label="Universal Text Injector modes">
+      <button class="tab active" type="button" data-tab="injectTab">Injector</button>
+      <button class="tab" type="button" data-tab="textTab">Text Dump</button>
+    </div>
 
-    <p id="status" aria-live="polite"></p>
-    <p class="hint">Shortcut: Ctrl+Shift+Y (uses last saved text)</p>
+    <!-- TAB 1: EXISTING FEATURE -->
+    <div id="injectTab" class="tab-content active">
+      <h2>Injection mode</h2>
+
+      <label for="injectText">Text to inject</label>
+      <textarea id="injectText" placeholder="Paste or type text here..."></textarea>
+
+      <button id="startBtn" type="button">Start Injection Mode</button>
+
+      <p id="status"></p>
+      <p class="hint">Alt + U to activate the extension and Ctrl + Shift + Y to start injection.</p>
+    </div>
+
+    <!-- TAB 2: NEW FEATURE -->
+    <div id="textTab" class="tab-content">
+      <h2>Page text</h2>
+
+      <button id="extractTextBtn">Extract Page Text</button>
+      <textarea id="textDumpArea" placeholder="Page text will appear here..."></textarea>
+    </div>
+
+    <footer class="popup-footer">
+      <button id="openShortcutSettingsBtn" type="button" class="secondary-button">Shortcut settings</button>
+    </footer>
+
   </main>
 
   <script src="popup.js"></script>

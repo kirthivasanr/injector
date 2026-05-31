@@ -1,60 +1,96 @@
-const injectTextEl = document.getElementById("injectText");
-const startBtnEl = document.getElementById("startBtn");
-const statusEl = document.getElementById("status");
+// --- TAB SWITCHING ---
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
 
-function setStatus(message, isError = false) {
-  statusEl.textContent = message;
-  statusEl.style.color = isError ? "#b91c1c" : "#0f766e";
-}
-
-async function loadSavedText() {
-  const result = await chrome.storage.local.get("lastInjectText");
-  if (typeof result.lastInjectText === "string") {
-    injectTextEl.value = result.lastInjectText;
-  }
-}
-
-async function saveText(text) {
-  await chrome.storage.local.set({ lastInjectText: text });
-}
-
-injectTextEl.addEventListener("input", () => {
-  void saveText(injectTextEl.value);
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.add("active");
+  });
 });
 
-startBtnEl.addEventListener("click", () => {
-  const text = injectTextEl.value;
+const openShortcutSettingsBtn = document.getElementById("openShortcutSettingsBtn");
 
-  if (!text.trim()) {
-    setStatus("Please enter some text first.", true);
-    return;
-  }
+if (openShortcutSettingsBtn) {
+  openShortcutSettingsBtn.addEventListener("click", async () => {
+    const shortcutUrl = "chrome://extensions/shortcuts";
 
-  startBtnEl.disabled = true;
-  setStatus("Starting injection mode...");
-
-  chrome.runtime.sendMessage(
-    {
-      type: "START_INJECTION_MODE",
-      payload: { text }
-    },
-    (response) => {
-      startBtnEl.disabled = false;
-
-      if (chrome.runtime.lastError) {
-        setStatus("Error: " + chrome.runtime.lastError.message, true);
-        return;
+    try {
+      await chrome.tabs.create({ url: shortcutUrl });
+    } catch (_err) {
+      try {
+        await chrome.runtime.openOptionsPage();
+      } catch (_optionsErr) {
+        console.warn("Open the browser shortcuts page manually:", shortcutUrl);
       }
-
-      if (!response || !response.ok) {
-        setStatus(response?.error || "Failed to start injection mode.", true);
-        return;
-      }
-
-      setStatus("Click any page element to inject text.");
-      window.close();
     }
-  );
-});
+  });
+}
 
-void loadSavedText();
+// --- TEXT EXTRACTION ---
+const extractBtn = document.getElementById("extractTextBtn");
+const textArea = document.getElementById("textDumpArea");
+
+if (extractBtn) {
+  extractBtn.addEventListener("click", async () => {
+    textArea.value = "Extracting...";
+
+    try {
+      chrome.runtime.sendMessage({ type: "GET_PAGE_TEXT" }, (response) => {
+        if (chrome.runtime.lastError) {
+          textArea.value = "Error: " + chrome.runtime.lastError.message;
+          return;
+        }
+
+        if (response?.ok) {
+          textArea.value = response.text;
+        } else {
+          textArea.value = response?.error || "Failed to extract text.";
+        }
+      });
+
+    } catch (err) {
+      textArea.value = "Exception: " + err.toString();
+    }
+  });
+}
+
+const startBtn = document.getElementById("startBtn");
+const injectTextArea = document.getElementById("injectText");
+const status = document.getElementById("status");
+
+if (startBtn) {
+  startBtn.addEventListener("click", async () => {
+    const text = injectTextArea.value;
+
+    if (!text.trim()) {
+      status.textContent = "Enter text first.";
+      return;
+    }
+
+    status.textContent = "Starting injection...";
+
+    try {
+      chrome.runtime.sendMessage(
+        {
+          type: "START_INJECTION_MODE",
+          payload: { text }
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            status.textContent = "Error: " + chrome.runtime.lastError.message;
+            return;
+          }
+
+          if (response?.ok) {
+            status.textContent = "Click on a field to inject.";
+          } else {
+            status.textContent = "Failed: " + (response?.error || "Unknown error");
+          }
+        }
+      );
+    } catch (err) {
+      status.textContent = "Exception: " + err.toString();
+    }
+  });
+}

@@ -1,6 +1,7 @@
 const MSG_START_INJECTION = "START_INJECTION_MODE";
 const MSG_ENABLE_INJECTION = "ENABLE_INJECTION_MODE";
 const MSG_INJECT_VIA_BG = "INJECT_VIA_BACKGROUND";
+const MSG_GET_PAGE_TEXT = "GET_PAGE_TEXT";
 const MSG_PING = "UTI_PING";
 
 async function getActiveTabId() {
@@ -70,6 +71,18 @@ async function startInjectionMode(text) {
   const tabId = await getActiveTabId();
   await ensureContentScript(tabId);
   await sendInjectionMessage(tabId, text);
+}
+
+async function getPageTextFromActiveTab() {
+  const tabId = await getActiveTabId();
+
+  const results = await chrome.scripting.executeScript({
+    target: { tabId },
+    func: () => document.documentElement?.innerText || ""
+  });
+
+  const text = results?.[0]?.result;
+  return typeof text === "string" ? text : "";
 }
 
 // ─── Main world injection function ───
@@ -230,6 +243,19 @@ async function handleMainWorldInjection(text, sendResponse) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === MSG_GET_PAGE_TEXT) {
+    (async () => {
+      try {
+        const text = await getPageTextFromActiveTab();
+        sendResponse({ ok: true, text });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        sendResponse({ ok: false, error: errorMessage });
+      }
+    })();
+    return true;
+  }
+
   // Handle injection start from popup
   if (message?.type === MSG_START_INJECTION) {
     const text = message?.payload?.text ?? "";
