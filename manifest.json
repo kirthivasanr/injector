@@ -23,8 +23,8 @@
   "commands": {
     "_execute_action": {
       "suggested_key": {
-        "default": "Alt+U",
-        "mac": "Alt+U"
+        "default": "Ctrl+K",
+        "mac": "Command+K"
       },
       "description": "Open Universal Text Injector popup"
     },
